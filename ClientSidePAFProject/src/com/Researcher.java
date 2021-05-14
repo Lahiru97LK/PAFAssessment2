@@ -1,5 +1,10 @@
 package com;
 import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+
 public class Researcher {
 	
 	private Connection connect() {
@@ -9,7 +14,7 @@ public class Researcher {
 
 			// Provide the correct details: DBServer/DBName, username, password
 			con = DriverManager.getConnection(
-					"jdbc:mysql://localhost:3307/paf_project?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC","root", "");
+					"jdbc:mysql://localhost:3307/pafassessment2?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC","root", "");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -19,7 +24,7 @@ public class Researcher {
 	// Insert researcher details to the database 
 	//Create a method called InsertResearcher
 	
-	public String insertResearcher(String researcherId, String name, String emailaddress, String workOnProduct, String productCategory, String purposeOfResearch, String previousProducts) 
+	public String insertResearcher(String name, String emailaddress, String workOnProduct, String productCategory, String purposeOfResearch, String previousProducts) 
 	 { 
 		String output = ""; 
 		try
@@ -33,7 +38,7 @@ public class Researcher {
 			String query = " insert into researcher(`researcherId`,`name`,`emailaddress`,`workOnProduct`,`productCategory`,`purposeOfResearch`,`previousProducts`)"+ " values (?, ?, ?, ?, ?, ?, ?)"; 
 			PreparedStatement preparedStmt = con.prepareStatement(query); 
 			// binding values
-			preparedStmt.setString(1, researcherId); 
+			preparedStmt.setInt(1, 0); 
 			preparedStmt.setString(2, name); 
 			preparedStmt.setString(3, emailaddress); 
 			preparedStmt.setString(4, workOnProduct); 
@@ -43,12 +48,19 @@ public class Researcher {
 			// execute the statement3
 			preparedStmt.execute(); 
 			con.close(); 
-			output = "Inserted successfully"; 
+			//output = "Inserted successfully"; 
+			
+			String newResearcher = readResearcher(); 
+			output =  "{\"status\":\"success\", \"data\": \"" + newResearcher + "\"}";    
+			
 		} 
 			catch (Exception e) 
 			{ 
-				output = "Error while inserting the researcher data."; 
-				System.err.println(e.getMessage()); 
+				//output = "Error while inserting the researcher data."; 
+				//System.err.println(e.getMessage()); 
+				
+				output =  "{\"status\":\"error\", \"data\": \"Error while inserting .\"}";  
+				System.err.println(e.getMessage());
 			}		 
 			return output; 
 	 } //end of the insert method 
@@ -62,7 +74,7 @@ public class Researcher {
 			if (con == null) 
 			{return "Error while connecting to the database for reading."; } 
 			// Prepare the html table to be displayed
-			output = "<table border='1'><tr><th>Id</th><th>Researcher Name</th>" +
+			output = "<table border='1'><tr><th>Researcher name</th>" +
 							"<th>Email Address</th>" +
 							"<th>Work on products</th>"+
 							"<th>productCategory</th>" +
@@ -70,7 +82,7 @@ public class Researcher {
 							"<th>previous Products</th>"+
 							"<th>Update</th><th>Remove</th></tr>"; 
 	 
-			String query = "select * from paf_project.researcher"; 
+			String query = "select * from researcher"; 
 			Statement stmt = con.createStatement(); 
 			ResultSet rs = stmt.executeQuery(query); 
 			
@@ -78,7 +90,7 @@ public class Researcher {
 			
 			while (rs.next()) 
 				{ 
-					String researcherId = rs.getString("researcherId"); 
+					String researcherId = Integer.toString(rs.getInt("researcherId")); 
 					String name = rs.getString("name"); 
 					String emailaddress = rs.getString("emailaddress");  
 					String workOnProduct = rs.getString("workOnProduct");
@@ -88,19 +100,20 @@ public class Researcher {
 					
 					// Add into the html table
 					
-					output += "<tr><td>" + researcherId + "</td>"; 
-					output += "<td>" + name + "</td>"; 
+					output += "<tr><td><input id='hideResearcherIDUpdate' name='hideResearcherIDUpdate' type='hidden' value='" + researcherId+ "'>" + name + "</td>"; 
+					//output += "<td>" + name + "</td>"; 
 					output += "<td>" + emailaddress + "</td>"; 
 					output += "<td>" + workOnProduct + "</td>";
 					output += "<td>" + productCategory + "</td>"; 
 					output += "<td>" + purposeOfResearch + "</td>"; 
-					output += "<td>" + previousProducts + "</td>"; 
-					// buttons
-					output += "<td><input name='btnUpdate' type='button' value='Update' class='btn btn-secondary'></td>"
-								+ "<td><form method='post' action='researcher.jsp'>"
-								+ "<input name='btnRemove' type='submit' value='Remove' class='btn btn-danger'>"
-								+ "<input name='researcherId' type='hidden' value='" + researcherId 
-								+ "'>" + "</form></td></tr>"; 
+					output += "<td>" + previousProducts + "</td>";
+					
+					output += "<td><input name='btnUpdate' "
+							+ " type='button' value='Update' class =' btnUpdate btn btn-secondary'data-researcherId='" + researcherId
+							+ "'></td>" + "<td><form method='post' action='ResearcherManagement.jsp'>" + "<input name='btnRemove' "
+							+ " type='button' value='Remove' class='btnRemove btn btn-danger' data-researcherId='" + researcherId + "'>"
+							+ "<input name='hidResearcherIDDelete' type='hidden' " + " value='" + researcherId + "'>"
+							+ "</form></td></tr>";
 				} 
 				con.close(); 
 				// Complete the html table
@@ -133,16 +146,22 @@ public class Researcher {
 				preparedStmt.setString(4, productCategory); 
 				preparedStmt.setString(5, purposeOfResearch); 
 				preparedStmt.setString(6, previousProducts); 
-				preparedStmt.setString(7, researcherId); 
+				preparedStmt.setInt(7, Integer.parseInt(researcherId)); 
 				// execute the statement
 				preparedStmt.execute(); 
 				con.close(); 
-				output = "Updated successfully"; 
+				
+				//output = "Updated successfully"; 
+				String newResearchers = readResearcher();    
+				output = "{\"status\":\"success\", \"data\": \"" + newResearchers + "\"}";
 			} 
 			catch (Exception e) 
 				{ 
-					output = "Error while updating the researcher details."; 
-					System.err.println(e.getMessage()); 
+					//output = "Error while updating the researcher details."; 
+					//System.err.println(e.getMessage()); 
+				    
+					output =  "{\"status\":\"error\", \"data\": \"Error while updating.\"}";   
+					System.err.println(e.getMessage());
 				} 
 			return output; 
 	 } // End of the update method ---
@@ -160,16 +179,21 @@ public class Researcher {
 				String query = "delete from researcher where researcherId=?"; 
 				PreparedStatement preparedStmt = con.prepareStatement(query); 
 				// binding values
-				preparedStmt.setString(1, researcherId);
+				preparedStmt.setInt(1, Integer.parseInt(researcherId));
 				// execute the statement
 				preparedStmt.execute(); 
 				con.close(); 
-				output = "Deleted successfully"; 
+				//output = "Deleted successfully"; 
+				String newResearcher = readResearcher();
+				output = "{\"status\":\"success\", \"data\": \"" + newResearcher + "\"}";
+				
 		} 
 			catch (Exception e) 
 		{ 
-				output = "Error while deleting the item."; 
-				System.err.println(e.getMessage()); 
+				//output = "Error while deleting the item."; 
+				//System.err.println(e.getMessage()); 
+				output =  "{\"status\":\"error\", \"data\": \"Error while delete.\"}";   
+				System.err.println(e.getMessage());
 		} 
 			return output; 
 	 	} 

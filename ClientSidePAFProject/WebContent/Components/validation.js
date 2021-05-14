@@ -1,8 +1,11 @@
-$(document).ready(function() 
-{  
-		$("#alertSuccess").hide();  
-	    $("#alertError").hide(); 
-}); 
+$(document).ready(function()
+	{
+	if ($("#alertSuccess").text().trim() == "")
+	{
+	$("#alertSuccess").hide();
+	}
+	$("#alertError").hide();
+	});
  
 // SAVE ============================================ 
 $(document).on("click", "#btnSave", function(event) 
@@ -22,7 +25,7 @@ $(document).on("click", "#btnSave", function(event)
 		return;  
 	} 
  
-// If valid field-----------------------------------------  
+// If valid -----------------------------------------  
 	var type = ($("#hideResearcherIDSave").val() == "") ? "POST" : "PUT"; 
 
 	$.ajax( 
@@ -49,8 +52,8 @@ function onResearcherSaveComplete(response, status)
 		{    
 			$("#alertSuccess").text("Successfully saved.");    
 			$("#alertSuccess").show(); 
-
-			$("#divResearcherGrid").html(resultSet.data);   
+			$("#divResearcherGrid").html(resultSet.data);  
+			 
 		} else if (resultSet.status.trim() == "error")   
 		{    
 			$("#alertError").text(resultSet.data);    
@@ -75,7 +78,14 @@ function onResearcherSaveComplete(response, status)
 // UPDATE========================================== 
 $(document).on("click", ".btnUpdate", function(event) 
 {     
-	$("#hideResearcherIDSave").val($(this).closest("tr").find('#hideResearcherIDUpdate').val());     
+	// $("#hideResearcherIDSave").val($(this).closest("tr").find('#hideResearcherIDUpdate').val()); 
+	
+	//$("#researcherId").val($(this).closest("tr").find('#researcherId').val());
+	//$("#researcherId").val($(this).closest("tr").find('#researcherId').text());
+	
+	//$("#hideResearcherIDSave").val($(this).closest("tr").find('td:eq(0)').text());
+	
+	$("#hideResearcherIDSave").val($(this).data("researcherId"));
 	$("#name").val($(this).closest("tr").find('td:eq(0)').text());     
 	$("#emailaddress").val($(this).closest("tr").find('td:eq(1)').text());     
 	$("#workOnProduct").val($(this).closest("tr").find('td:eq(2)').text());
@@ -86,8 +96,8 @@ $(document).on("click", ".btnUpdate", function(event)
 
 
 
-
-//REMOVE===========================================
+/*
+//REMOVE/DELETE===========================================
 $(document).on("click", ".btnRemove", function(event) 
 {  
 	$.ajax(  
@@ -101,14 +111,24 @@ $(document).on("click", ".btnRemove", function(event)
 			onResearcherDeleteComplete(response.responseText, status);   
 		}  
 	}); 
-}); 
+}); */
 
+//Remove 
+$(document).on("click", ".btnRemove", function(event)
+		{
+		 $(this).closest(".Researcher").remove();
+
+		 $("#alertSuccess").text("Removed successfully.");
+		 $("#alertSuccess").show();
+		});
+
+
+//CLIRNT MODEL - DELETE ==========================================
 function onResearcherDeleteComplete(response, status) 
 {  
 	if (status == "success")  
 	{   
 		var resultSet = JSON.parse(response); 
-
 		if (resultSet.status.trim() == "success")   
 		{    
 			
@@ -167,7 +187,7 @@ function validateResearcherForm()
 		// previous Products------------------------  
 	if ($("#previousProducts").val().trim() == "")  
 	{   
-		return "Insert epreviousProducts.";  
+		return "Insert previousProducts.";  
 	}
 	
 	return true; 
